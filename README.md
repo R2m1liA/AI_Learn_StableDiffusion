@@ -87,7 +87,7 @@ StableDiffusion的训练过程可以看作是一个加噪声与去噪声的过�
 
 
 
-## 参考纹章
+## 参考文章
 
 深入浅出完整解析Stable Diffusion（SD）核心基础知识 - Rocky Ding的文章 - 知乎
 
