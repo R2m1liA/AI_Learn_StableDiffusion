@@ -1,6 +1,8 @@
 # 人工智能导论自主学习
 ## StableDiffusion
 
+    https://github.com/Stability-AI/stablediffusion
+
 Stable Diffusion(SD)模型是由Stability AI和LAION等公司共同开发的**生成式模型**，可以用于文生图、图生图、图像inpainting，ControlNet控制生成，图像超分等丰富的任务。
 
 ## Stable Diffusion原理
