@@ -48,7 +48,28 @@ UNet整体网络结构呈现U型，因此得名UNet，结构如图所示：
 
 stablediffusion模型中的UNet模型位于/ldm/modules/diffusionmodules/openaimodel.py
 
-### 
+### Clip Text Encoder模型
+作为文生图模型，Stable Diffusion中的文本编码模块直接决定了语义信息的优良成都，从而影响到最后图片生成的多样性和可控性。Stable Diffusion中的文本编码模块使用了OpenAI的CLIP模型，CLIP模型是一个基于Transformer的文本编码模型，其能够将文本编码成一个向量，从而能够将文本信息与图像信息进行对齐，从而实现文生图的功能。
+
+CLIP模型是基于对比学习的多模态模型主要包含Text Encoder和Image Encoder两个模型。其中TextEncoder用来提取文本的特征，可以使用NLP中常用的text transformer模型作为Text Encoder；而Image Encoder用来提取图像特征，可以使用CNN/vision transformer模型作为Image Encoder。CLIP模型的训练目标是让Text Encoder和Image Encoder能够将同一张图片和描述图片的文本编码成相同的向量。
+
+![CLIP模型](./pics/CLIP.png)
+
+对于包含N个文本-图像对的训练patch，将N个文本特征和N个图像特征两两组合，得到N^2个组合，其中N个组合对应的文本和图像是同一个，其余N^2-N个组合对应的文本和图像是不同的。对于每个组合，CLIP模型都会计算文本特征和图像特征的余弦相似度，然后将同一个文本-图像对应的余弦相似度设为1，其余余弦相似度设为0，然后将所有组合的余弦相似度求和，得到一个损失函数，最小化这个损失函数，就能够让同一个文本-图像对应的余弦相似度尽可能接近1，而不同文本-图像对应的余弦相似度尽可能接近0，从而实现对比学习。
+
+![CLIP模型训练过程](./pics/CLIP1.svg)
+
+在完成模型的预训练后，可以使用模型进行zero-shot预测。首先创建一个标签集，并得到每一个标签的特征向量；然后，取一张图片，通过Image Encoder获得该图片的特征向量；最后计算图片向量和文字向量的相似度，取相似度最高的那一条label即可
+
+![CLIP模型训练过程](./pics/CLIP2.svg)
+
+## Stable Diffusion模型的工作流程
+
+以图生图任务为例，图生图任务是指将一段文本和一张图片输入Stable Diffusion中，经过一定的迭代次数，SD模型输出一张符合文本与图片描述的图片。在图生图任务中，模型首先接受一张图像，利用VAE编码器对这张图像进行编码，使其进入隐空间，然后使用该Latent特征基于DDIM Sampler进行加噪，此时获得输入图像加噪后的特征，后续将在这个图像的基础上进行采样；然后，模型接受一段文本，使用CLIP模型对文本进行编码，得到文本的特征向量；模型将加噪后的图像与文本特征向量输入Unet网络进行多次迭代；最后，模型将迭代完成的隐空间解码生成图片。这边是图生图任务的工作流程
+
+![img2img](./pics/img2img.png)
+
+而对于文生图任务，其工作流程和图生图任务类似，试讲一段文本输入Stable Diffusion，经过一定的迭代次数，，输出一张符合文本描述的图片，在这个过程中由于没有接受参考图像，因此在VAE编码器中输入的是一张随机的高斯噪声，此后的流程和图生图任务相同
 
 
 
@@ -64,3 +85,30 @@ StableDiffusion的训练过程可以看作是一个加噪声与去噪声的过�
 6. 计算产生的噪声和预测的噪声的L2损失
 7. 计算梯度并进行参数更新
 
+
+
+## 参考纹章
+
+深入浅出完整解析Stable Diffusion（SD）核心基础知识 - Rocky Ding的文章 - 知乎
+
+    https://zhuanlan.zhihu.com/p/632809634
+
+Diffusion扩散模型学习3——Stable Diffusion结构解析-以图像生成图像（图生图，img2img）为例
+
+    https://codeantenna.com/a/m1lDgPkkSq
+
+理解变分自编码器（VAE） - 周巴卡的文章 - 知乎
+
+    https://zhuanlan.zhihu.com/p/519448634
+
+Hugging Face Diffusion Models Course-CN
+
+    https://github.com/darcula1993/diffusion-models-class-CN.git
+
+手写stable-diffusion - 罗培羽的文章 - 知乎
+
+    https://zhuanlan.zhihu.com/p/621325215
+
+扩散模型之DDPM - 小小将的文章 - 知乎
+
+    https://zhuanlan.zhihu.com/p/563661713
